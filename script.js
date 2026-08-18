@@ -1,128 +1,260 @@
-```javascript
-// ================= MOBILE MENU =================
-
-const menuBtn = document.getElementById("menuBtn");
-const navMenu = document.getElementById("navMenu");
-
-menuBtn.addEventListener("click", () => {
-    navMenu.classList.toggle("active");
-
-    const icon = menuBtn.querySelector("i");
-
-    if (navMenu.classList.contains("active")) {
-        icon.classList.remove("fa-bars");
-        icon.classList.add("fa-xmark");
-    } else {
-        icon.classList.remove("fa-xmark");
-        icon.classList.add("fa-bars");
-    }
-});
+// Set today's date
+document.getElementById("invoiceDate").value =
+    new Date().toISOString().split("T")[0];
 
 
-// Close mobile menu after clicking a link
+// ADD PRODUCT
 
-document.querySelectorAll("#navMenu a").forEach(link => {
+function addProduct() {
 
-    link.addEventListener("click", () => {
+    const productForm = document.getElementById("productForm");
 
-        navMenu.classList.remove("active");
+    const row = document.createElement("div");
 
-        const icon = menuBtn.querySelector("i");
+    row.className = "product-row";
 
-        icon.classList.remove("fa-xmark");
-        icon.classList.add("fa-bars");
+    row.innerHTML = `
+        <input type="text"
+               class="p-description"
+               placeholder="Description">
 
-    });
+        <input type="text"
+               class="p-hsn"
+               placeholder="HSN">
 
-});
+        <input type="number"
+               class="p-qty"
+               placeholder="Qty"
+               value="1"
+               min="1">
+
+        <input type="number"
+               class="p-rate"
+               placeholder="Rate"
+               value="0"
+               min="0">
+
+        <button onclick="removeProduct(this)"
+                class="remove-btn">
+            ×
+        </button>
+    `;
+
+    productForm.appendChild(row);
+}
 
 
-// ================= CONTACT FORM =================
+// REMOVE PRODUCT
 
-const contactForm = document.getElementById("contactForm");
-const formMessage = document.getElementById("formMessage");
+function removeProduct(button) {
 
-contactForm.addEventListener("submit", function(event) {
+    const rows = document.querySelectorAll(".product-row");
 
-    event.preventDefault();
-
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const subject = document.getElementById("subject").value.trim();
-    const message = document.getElementById("message").value.trim();
-
-    if (!name || !email || !subject || !message) {
-
-        formMessage.textContent =
-            "Please fill in all fields.";
-
-        return;
+    if (rows.length > 1) {
+        button.parentElement.remove();
     }
 
-    formMessage.textContent =
-        "Thank you! Your message has been received.";
-
-    contactForm.reset();
-
-});
+    updateInvoice();
+}
 
 
-// ================= NAVBAR SCROLL =================
+// UPDATE INVOICE
 
-window.addEventListener("scroll", () => {
+function updateInvoice() {
 
-    const navbar = document.querySelector(".navbar");
+    // Customer details
 
-    if (window.scrollY > 50) {
+    document.getElementById("outCustomerName").textContent =
+        document.getElementById("customerName").value;
 
-        navbar.style.background = "rgba(5,5,5,0.97)";
+    document.getElementById("outCustomerAddress").textContent =
+        document.getElementById("customerAddress").value;
 
-    } else {
+    document.getElementById("outCustomerGST").textContent =
+        document.getElementById("customerGST").value;
 
-        navbar.style.background = "rgba(8,8,8,0.85)";
+    document.getElementById("outCustomerState").textContent =
+        document.getElementById("customerState").value;
+
+
+    // Invoice details
+
+    document.getElementById("outInvoiceNo").textContent =
+        document.getElementById("invoiceNo").value;
+
+    const date =
+        document.getElementById("invoiceDate").value;
+
+    if (date) {
+
+        const formattedDate =
+            new Date(date).toLocaleDateString("en-IN");
+
+        document.getElementById("outInvoiceDate").textContent =
+            formattedDate;
 
     }
 
-});
+
+    // Bank details
+
+    document.getElementById("outBankName").textContent =
+        document.getElementById("bankName").value;
+
+    document.getElementById("outAccountNo").textContent =
+        document.getElementById("accountNo").value;
+
+    document.getElementById("outIFSC").textContent =
+        document.getElementById("ifsc").value;
 
 
-// ================= SIMPLE REVEAL ANIMATION =================
+    // PRODUCTS
 
-const revealElements = document.querySelectorAll(
-    ".service-card, .project-card, .why-card, .stat"
-);
+    const descriptions =
+        document.querySelectorAll(".p-description");
 
-const observer = new IntersectionObserver(
+    const hsns =
+        document.querySelectorAll(".p-hsn");
 
-    entries => {
+    const quantities =
+        document.querySelectorAll(".p-qty");
 
-        entries.forEach(entry => {
+    const rates =
+        document.querySelectorAll(".p-rate");
 
-            if (entry.isIntersecting) {
+    const invoiceItems =
+        document.getElementById("invoiceItems");
 
-                entry.target.style.opacity = "1";
-                entry.target.style.transform = "translateY(0)";
 
-            }
+    invoiceItems.innerHTML = "";
 
-        });
+    let subtotal = 0;
 
-    },
 
-    {
-        threshold: 0.15
+    for (let i = 0; i < descriptions.length; i++) {
+
+        const description =
+            descriptions[i].value || "";
+
+        const hsn =
+            hsns[i].value || "";
+
+        const qty =
+            Number(quantities[i].value) || 0;
+
+        const rate =
+            Number(rates[i].value) || 0;
+
+        const amount =
+            qty * rate;
+
+        subtotal += amount;
+
+
+        const tr =
+            document.createElement("tr");
+
+        tr.innerHTML = `
+
+            <td>${i + 1}</td>
+
+            <td>${description}</td>
+
+            <td>${hsn}</td>
+
+            <td>${qty}</td>
+
+            <td>₹${rate.toFixed(2)}</td>
+
+            <td>₹${amount.toFixed(2)}</td>
+
+        `;
+
+        invoiceItems.appendChild(tr);
+
     }
 
-);
+
+    // Add empty rows
+
+    const currentRows =
+        descriptions.length;
+
+    const emptyRows =
+        Math.max(8 - currentRows, 0);
 
 
-revealElements.forEach(element => {
+    for (let i = 0; i < emptyRows; i++) {
 
-    element.style.opacity = "0";
-    element.style.transform = "translateY(25px)";
-    element.style.transition = "opacity 0.7s ease, transform 0.7s ease";
+        const tr =
+            document.createElement("tr");
 
-    observer.observe(element);
+        tr.innerHTML = `
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        `;
+
+        invoiceItems.appendChild(tr);
+    }
+
+
+    // GST
+
+    const cgstRate =
+        Number(document.getElementById("cgstRate").value) || 0;
+
+    const sgstRate =
+        Number(document.getElementById("sgstRate").value) || 0;
+
+
+    const cgst =
+        subtotal * cgstRate / 100;
+
+    const sgst =
+        subtotal * sgstRate / 100;
+
+
+    const total =
+        subtotal + cgst + sgst;
+
+
+    // DISPLAY TOTALS
+
+    document.getElementById("subtotal").textContent =
+        "₹" + subtotal.toFixed(2);
+
+    document.getElementById("cgstAmount").textContent =
+        "₹" + cgst.toFixed(2);
+
+    document.getElementById("sgstAmount").textContent =
+        "₹" + sgst.toFixed(2);
+
+    document.getElementById("grandTotal").textContent =
+        "₹" + total.toFixed(2);
+
+
+    document.getElementById("cgstLabel").textContent =
+        cgstRate + "%";
+
+    document.getElementById("sgstLabel").textContent =
+        sgstRate + "%";
+
+}
+
+
+// AUTO UPDATE
+
+document.addEventListener("input", function () {
+
+    updateInvoice();
 
 });
-```
+
+
+// FIRST LOAD
+
+updateInvoice();
